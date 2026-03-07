@@ -1,7 +1,7 @@
 from aiogram import Router, types
 from aiogram.filters import CommandStart
 from api_client import backend_api
-from keyboards import get_admin_main_menu, get_user_main_menu
+from keyboards import get_admin_main_menu, get_user_main_menu, get_unauthorized_keyboard
 from config import ADMIN_IDS
 
 router = Router()
@@ -26,10 +26,19 @@ async def cmd_start(message: types.Message):
             reply_markup=get_admin_main_menu()
         )
     else:
-        await message.answer(
-            f"Привіт, {message.from_user.first_name}! Оберіть дію:",
-            reply_markup=get_user_main_menu()
-        )
+        user_info = await backend_api.get_user_by_id(message.from_user.id)
+        is_whitelisted = user_info.get("isWhitelisted", False) if isinstance(user_info, dict) else False
+        
+        if is_whitelisted:
+            await message.answer(
+                f"Привіт, {message.from_user.first_name}! Оберіть дію:",
+                reply_markup=get_user_main_menu()
+            )
+        else:
+            await message.answer(
+                f"Привіт, {message.from_user.first_name}! Ви не у білому списку. Доступні обмежені функції:",
+                reply_markup=get_unauthorized_keyboard()
+            )
 
 @router.message(lambda message: message.text == "⬅️ Back")
 async def back_to_main(message: types.Message):
@@ -39,4 +48,10 @@ async def back_to_main(message: types.Message):
     if is_admin:
         await message.answer("Головне меню:", reply_markup=get_admin_main_menu())
     else:
-        await message.answer("Головне меню:", reply_markup=get_user_main_menu())
+        user_info = await backend_api.get_user_by_id(message.from_user.id)
+        is_whitelisted = user_info.get("isWhitelisted", False) if isinstance(user_info, dict) else False
+        
+        if is_whitelisted:
+            await message.answer("Головне меню:", reply_markup=get_user_main_menu())
+        else:
+            await message.answer("Вертаємось:", reply_markup=get_unauthorized_keyboard())
