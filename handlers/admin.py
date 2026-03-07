@@ -57,7 +57,7 @@ async def process_account_info(message: types.Message, state: FSMContext):
         await message.answer("❌ Акаунт не знайдено.")
         return
     
-    acc_num = acc_info.get('number') or 'N/A'
+    acc_num = acc_info.get('phone') or 'N/A'
     acc_key = acc_info.get('key') or 'N/A'
     tg_user_id = acc_info.get('telegramUserId') or acc_info.get('userId')
     
@@ -183,7 +183,7 @@ async def list_all_accounts(message: types.Message):
         # Display: @username or ID or placeholder
         user_display = f"@{username}" if username else (f"<code>{tg_user_id}</code>" if tg_user_id else '❌ Немає')
         
-        acc_num = acc.get('number') or 'N/A'
+        acc_num = acc.get('phone') or 'N/A'
         acc_key = acc.get('key') or 'N/A'
         
         text += (

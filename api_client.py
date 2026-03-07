@@ -66,7 +66,7 @@ class BackendAPI:
         payload = {
             "telegramId": str(target_id),
             "adminId": adm_id_str,
-            "number": str(number)
+            "phone": str(number)
         }
         return await self._request("POST", "/accounts/admin/give-key", params={"adminId": adm_id_int}, json=payload)
 
