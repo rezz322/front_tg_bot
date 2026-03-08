@@ -1,6 +1,6 @@
 from aiogram import Router, types
 from aiogram.filters import CommandStart
-from api_client import backend_api
+from api_user import user_api as backend_api
 from keyboards import get_admin_main_menu, get_user_main_menu, get_unauthorized_keyboard
 from config import ADMIN_IDS
 

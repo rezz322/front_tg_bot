@@ -14,3 +14,5 @@ ADMIN_IDS = list(map(int, os.getenv("ADMIN_IDS").split(","))) # Add your ID here
 
 FAQ_TEXT = os.getenv("FAQ_TEXT", "Инструкция отсутствует.")
 CONTACT_LINK = os.getenv("CONTACT_LINK", "https://t.me/unknown")
+CLIENT_APK_DESC = os.getenv("CLIENT_APK_DESC", "Клиентский APK")
+ADMIN_APK_DESC = os.getenv("ADMIN_APK_DESC", "Админский APK")

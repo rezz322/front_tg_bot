@@ -1,7 +1,7 @@
 from typing import Any, Awaitable, Callable, Dict
 from aiogram import BaseMiddleware
 from aiogram.types import Message
-from api_client import backend_api
+from api_user import user_api as backend_api
 
 class BanMiddleware(BaseMiddleware):
     async def __call__(

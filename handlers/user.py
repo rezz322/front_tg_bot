@@ -1,6 +1,6 @@
 import os
 from aiogram import Router, types, F
-from api_client import backend_api
+from api_user import user_api as backend_api
 from keyboards import get_user_main_menu, get_apk_menu
 from config import FAQ_TEXT, CONTACT_LINK
 from states import BindStates
@@ -89,26 +89,40 @@ async def process_bind_pin(message: types.Message, state: FSMContext):
 
 @router.message(F.text == "📲 Client APK")
 async def download_client_apk(message: types.Message):
-    # Hardcoded forwarding: Client ID 6 from specific channel
-    channel_id = int(os.getenv("CHANNEL_ID"))
+    channel_id = os.getenv("CHANNEL_ID")
+    message_id = os.getenv("CLIENT_ID_APK")
+    
+    if not channel_id or not message_id:
+        await message.answer("❌ Налаштування для завантаження Client APK відсутні.")
+        return
+
     try:
+        from config import CLIENT_APK_DESC
+        await message.answer(CLIENT_APK_DESC)
         await message.bot.copy_message(
             chat_id=message.chat.id,
-            from_chat_id=channel_id,
-            message_id=int(os.getenv("CLIENT_ID_APK"))
+            from_chat_id=int(channel_id),
+            message_id=int(message_id)
         )
-    except Exception as e:
-        await message.answer(f"❌ Помилка завантаження Client APK: {e}")
+    except Exception:
+        pass
 
 @router.message(F.text == "📲 Admin APK")
 async def download_admin_apk(message: types.Message):
-    # Hardcoded forwarding: Admin ID 7 from specific channel
-    channel_id = int(os.getenv("CHANNEL_ID"))
+    channel_id = os.getenv("CHANNEL_ID")
+    message_id = os.getenv("ADMIN_ID_APK")
+    
+    if not channel_id or not message_id:
+        await message.answer("❌ Налаштування для завантаження Admin APK відсутні.")
+        return
+
     try:
+        from config import ADMIN_APK_DESC
+        await message.answer(ADMIN_APK_DESC)
         await message.bot.copy_message(
             chat_id=message.chat.id,
-            from_chat_id=channel_id,
-            message_id=int(os.getenv("ADMIN_ID_APK"))
+            from_chat_id=int(channel_id),
+            message_id=int(message_id)
         )
     except Exception:
-        await message.answer("❌ Помилка завантажения Admin APK. Зверніться до підтримки.")
+        pass
