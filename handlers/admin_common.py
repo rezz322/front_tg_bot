@@ -4,8 +4,8 @@ from api_user import user_api as backend_api
 
 async def check_is_admin(user_id: int):
     """Checks if a user has admin privileges."""
-    admin_response = await backend_api.check_admin(user_id)
-    return admin_response.get("isAdmin", False) if isinstance(admin_response, dict) else False
+    access = await backend_api.check_admin(user_id)
+    return access.get("isAdmin", False) if isinstance(access, dict) else False
 
 def admin_only(handler):
     """Decorator to restrict handler access to admins only."""

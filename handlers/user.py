@@ -8,11 +8,10 @@ from aiogram.fsm.context import FSMContext
 
 router = Router()
 
-@router.message(F.text == "📋 My Accounts")
+@router.message(F.text == "📋 Мої Акаунти")
 async def show_accounts(message: types.Message):
     # For non-admins, show only their accounts
     accounts = await backend_api.get_user_accounts(message.from_user.id)
-    print(accounts)
     if "error" in accounts:
         if accounts.get("status") == 404:
             await message.answer("📭 У вас немає прив'язаних акаунтів.")
@@ -44,11 +43,11 @@ async def show_faq(message: types.Message):
     text = f"{FAQ_TEXT}\n\nПо всім питанням: {CONTACT_LINK}"
     await message.answer(text)
 
-@router.message(F.text == "📥 APKs")
+@router.message(F.text == "📥 APK файли")
 async def show_apk_menu(message: types.Message):
     await message.answer("Оберіть APK для завантаження:", reply_markup=get_apk_menu())
 
-@router.message(F.text == "🔗 Bind Account")
+@router.message(F.text == "🔗 Прив'язати Акаунт")
 async def bind_account_start(message: types.Message, state: FSMContext):
     await message.answer("Введіть ваш номер телефону:")
     await state.set_state(BindStates.waiting_for_phone)
@@ -80,7 +79,7 @@ async def process_bind_pin(message: types.Message, state: FSMContext):
     else:
         await message.answer(f"✅ Акаунт успішно привязано!\nВаш ключ: <code>{result.get('key')}</code>", parse_mode="HTML")
 
-@router.message(F.text == "📲 Client APK")
+@router.message(F.text == "📲 Клієнтський APK")
 async def download_client_apk(message: types.Message):
     channel_id = os.getenv("CHANNEL_ID")
     message_id = os.getenv("CLIENT_ID_APK")
@@ -100,7 +99,7 @@ async def download_client_apk(message: types.Message):
     except Exception:
         pass
 
-@router.message(F.text == "📲 Admin APK")
+@router.message(F.text == "📲 Адмінський APK")
 async def download_admin_apk(message: types.Message):
     channel_id = os.getenv("CHANNEL_ID")
     message_id = os.getenv("ADMIN_ID_APK")

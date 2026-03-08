@@ -6,10 +6,11 @@ from api_admin import admin_api as backend_api
 import keyboards
 from states import AdminStates
 from handlers.admin_common import admin_only
+from utils.formatters import format_account_info
 
 router = Router()
 
-@router.message(F.text == "📊 Info Account")
+@router.message(F.text == "📊 Інфо Акаунта")
 @admin_only
 async def ask_account_number(message: types.Message, state: FSMContext):
     await message.answer("Введіть номер акаунта:")
@@ -25,33 +26,15 @@ async def process_account_info(message: types.Message, state: FSMContext):
         await message.answer("❌ Акаунт не знайдено.")
         return
     
+    response = format_account_info(acc_info)
     acc_id = acc_info.get('id')
     acc_num = acc_info.get('phone') or 'N/A'
-    acc_key = acc_info.get('key') or 'N/A'
     is_acc_banned = acc_info.get('isBanned', False)
     
-    tg_users = acc_info.get('telegramUsers', [])
-    user_display = ", ".join([f"@{u.get('username')}" if u.get('username') else f"<code>{u.get('telegramId')}</code>" for u in tg_users]) if tg_users else "❌ Немає"
-    
-    full_name = acc_info.get('full_name') or 'N/A'
-    pin_code = acc_info.get('pin_code') or 'N/A'
-    expires_at = acc_info.get('expiresAt')
-    expires_str = expires_at.split('T')[0] if expires_at else '♾️'
-    
-    response = (
-        f"📊 Акаунт: <code>{acc_num}</code>\n"
-        f"👤 ПІБ: <b>{html.escape(full_name)}</b>\n"
-        f"🔐 PIN: <code>{pin_code}</code>\n"
-        f"⏳ Срок: <code>{expires_str}</code>\n"
-        f"🆕 Ключ: <code>{acc_key}</code>\n"
-        f"🛡️ Статус: {'🚫 ЗАБАНЕНИЙ' if is_acc_banned else '✅ Активний'}\n"
-        f"👥 Користувачі: {user_display}"
-    )
-    
     kb_buttons = [
-        [InlineKeyboardButton(text="🔄 Refresh Key", callback_data=f"refresh_{acc_num}")],
-        [InlineKeyboardButton(text="📝 Edit Details", callback_data=f"edit_acc_{acc_num}")],
-        [InlineKeyboardButton(text="✅ Unban Acc" if is_acc_banned else "🚫 Ban Acc", callback_data=f"accban_{acc_id}_{acc_num}")]
+        [InlineKeyboardButton(text="🔄 Оновити Ключ", callback_data=f"refresh_{acc_num}")],
+        [InlineKeyboardButton(text="📝 Редагувати Дані", callback_data=f"edit_acc_{acc_num}")],
+        [InlineKeyboardButton(text="✅ Розбанити Акк" if is_acc_banned else "🚫 Забанити Акк", callback_data=f"accban_{acc_id}_{acc_num}")]
     ]
     await message.answer(response, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(inline_keyboard=kb_buttons))
 
@@ -75,7 +58,7 @@ async def cb_refresh_key(callback: types.CallbackQuery):
         await callback.message.answer(f"✅ Ключ для акаунта <code>{acc_num}</code> оновлено!\nНовий ключ: <code>{result.get('key')}</code>", parse_mode="HTML")
         await callback.answer()
 
-@router.message(F.text == "🔑 Give Key")
+@router.message(F.text == "🔑 Видати Ключ")
 @admin_only
 async def start_give_key_flow(message: types.Message, state: FSMContext):
     await message.answer("Введіть Username користувача (без @):")
@@ -117,7 +100,7 @@ async def process_give_key_days(message: types.Message, state: FSMContext):
         status_msg = f"на {days} днів" if days > 0 else "безстроково"
         await message.answer(f"✅ Доступ надано {status_msg}.\nАкаунт: <code>{acc_number}</code>", parse_mode="HTML")
 
-@router.message(F.text == "📚 All Accounts")
+@router.message(F.text == "📚 Всі Акаунти")
 @admin_only
 async def list_all_accounts(message: types.Message):
     accounts = await backend_api.list_accounts(message.from_user.id)
@@ -127,13 +110,14 @@ async def list_all_accounts(message: types.Message):
 
     text = "📚 <b>Всі акаунти в системі:</b>\n"
     for acc in accounts:
-        user_display = ", ".join([f"@{u.get('username')}" if u.get('username') else f"<code>{u.get('telegramId')}</code>" for u in acc.get('telegramUsers', [])]) or "❌ Немає"
-        status_prefix = "🚫 " if acc.get('isBanned') else ""
+        users = acc.get('telegramUsers', [])
+        user_display = ", ".join([f"@{u.get('username')}" if u.get('username') else str(u.get('telegramId')) for u in users]) or "❌"
+        status = "🚫 " if acc.get('isBanned') else "🔹 "
+        
         text += (
-            f"\n🔹 {status_prefix}<code>{acc.get('phone')}</code> | {html.escape(acc.get('full_name') or 'N/A')}\n"
-            f"   🔐 PIN: <code>{acc.get('pin_code')}</code>\n"
-            f"   🆕 Ключ: <code>{acc.get('key')}</code>\n"
-            f"   👤 Користувачі: {user_display}\n"
+            f"\n{status}<code>{acc.get('phone')}</code> | {html.escape(acc.get('full_name') or 'N/A')}\n"
+            f"   PIN: <code>{acc.get('pin_code')}</code> | Key: <code>{acc.get('key')}</code>\n"
+            f"   👥 {user_display}\n"
         )
     await message.answer(text, parse_mode="HTML")
 

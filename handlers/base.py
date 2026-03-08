@@ -7,50 +7,47 @@ router = Router()
 
 @router.message(CommandStart())
 async def cmd_start(message: types.Message):
-    user_data = {
-        "id": str(message.from_user.id),
-        "username": message.from_user.username or "unknown"
-    }
+    # Perform a single check for both access and admin status
+    # This also handles auto-registration on the backend
+    access_data = await backend_api.check_access(message.from_user.id, username=message.from_user.username)
     
-    # Try to register user on backend
-    await backend_api.register_user(user_data)
-    
-    # Check if user is admin via backend API
-    admin_response = await backend_api.check_admin(message.from_user.id)
-    is_admin = admin_response.get("isAdmin", False) if isinstance(admin_response, dict) else False
+    if not isinstance(access_data, dict):
+        await message.answer("❌ Помилка при перевірці доступу. Спробуйте пізніше.")
+        return
+
+    is_admin = access_data.get("isAdmin", False)
+    allowed = access_data.get("allowed", False)
+    status_msg = access_data.get("message", "Доступ заборонено.")
+
     if is_admin:
         await message.answer(
-            f"Привіт, Адмін {message.from_user.first_name}! (Права адміністратора підтверджено) Оберіть дію:",
+            f"Привіт, Адмін {message.from_user.first_name}! Оберіть дію:",
             reply_markup=get_admin_main_menu()
         )
-    else:
-        user_info = await backend_api.get_user_by_id(message.from_user.id)
-        print(user_info)
-        is_whitelisted = user_info.get("isWhitelisted", False) if isinstance(user_info, dict) else False
-        
-        if is_whitelisted:
-            await message.answer(
-                f"Привіт, {message.from_user.first_name}! Оберіть дію:",
-                reply_markup=get_user_main_menu()
-            )
-        else:
-            await message.answer(
-                f"Привіт, {message.from_user.first_name}! Ви не у білому списку. Доступні обмежені функції:",
-                reply_markup=get_unauthorized_keyboard()
-            )
+        return
 
-@router.message(lambda message: message.text == "⬅️ Back")
-async def back_to_main(message: types.Message):
-    admin_response = await backend_api.check_admin(message.from_user.id)
-    is_admin = admin_response.get("isAdmin", False) if isinstance(admin_response, dict) else False
-    
-    if is_admin:
-        await message.answer("Головне меню:", reply_markup=get_admin_main_menu())
+    if allowed:
+        await message.answer(
+            f"Привіт, {message.from_user.first_name}! {status_msg} Оберіть дію:",
+            reply_markup=get_user_main_menu()
+        )
     else:
-        user_info = await backend_api.get_user_by_id(message.from_user.id)
-        is_whitelisted = user_info.get("isWhitelisted", False) if isinstance(user_info, dict) else False
-        
-        if is_whitelisted:
-            await message.answer("Головне меню:", reply_markup=get_user_main_menu())
-        else:
-            await message.answer("Вертаємось:", reply_markup=get_unauthorized_keyboard())
+        await message.answer(
+            f"🚫 {status_msg}",
+            reply_markup=get_unauthorized_keyboard()
+        )
+
+@router.message(lambda message: message.text == "⬅️ Назад")
+async def back_to_main(message: types.Message):
+    access_data = await backend_api.check_access(message.from_user.id, username=message.from_user.username)
+    
+    if not isinstance(access_data, dict):
+        await message.answer("Вертаємось:", reply_markup=get_unauthorized_keyboard())
+        return
+
+    if access_data.get("isAdmin", False):
+        await message.answer("Головне меню:", reply_markup=get_admin_main_menu())
+    elif access_data.get("allowed", False):
+        await message.answer("Головне меню:", reply_markup=get_user_main_menu())
+    else:
+        await message.answer("Вертаємось:", reply_markup=get_unauthorized_keyboard())

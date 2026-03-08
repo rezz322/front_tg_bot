@@ -5,17 +5,13 @@ class AdminAPI(BaseAPI):
         return await self._request("GET", "/users", params={"adminId": int(admin_id)})
 
     async def toggle_user_ban(self, target_id: str, admin_id: int):
-        payload = {"adminId": str(admin_id)}
-        return await self._request("POST", f"/users/admin/ban/{target_id}", json=payload)
-
-    async def ban_user(self, target_id: str, admin_id: int):
-        return await self.toggle_user_ban(target_id, admin_id)
-
-    async def unban_user(self, target_id: str, admin_id: int):
-        return await self.toggle_user_ban(target_id, admin_id)
+        return await self._request("POST", f"/users/admin/ban/{target_id}", json={"adminId": str(admin_id)})
 
     async def list_accounts(self, admin_id: int):
         return await self._request("GET", "/accounts", params={"adminId": admin_id})
+
+    async def get_user_accounts(self, target_id: int, admin_id: int):
+        return await self._request("GET", f"/accounts/user/{target_id}", params={"adminId": admin_id})
 
     async def give_key(self, target_id: str, number: str, admin_id: int, days: int = None):
         payload = self._admin_payload(admin_id, {"telegramId": str(target_id), "phone": str(number), "days": days})
@@ -55,5 +51,13 @@ class AdminAPI(BaseAPI):
 
     async def toggle_account_ban(self, account_id: int, admin_id: int):
         return await self._request("POST", f"/accounts/admin/toggle-ban/{account_id}", json={"adminId": str(admin_id)})
+
+    async def remove_account_from_user(self, phone: str, identifier: str, admin_id: int):
+        payload = {
+            "phone": phone,
+            "identifier": str(identifier),
+            "adminId": str(admin_id)
+        }
+        return await self._request("DELETE", "/accounts/admin/remove-account", json=payload)
 
 admin_api = AdminAPI()

@@ -1,15 +1,15 @@
 from api_base import BaseAPI
 
 class UserAPI(BaseAPI):
-    async def register_user(self, user_data: dict):
-        payload = {
-            "id": str(user_data["id"]),
-            "username": user_data.get("username", "unknown")
-        }
-        return await self._request("POST", "/users", json=payload)
 
     async def check_admin(self, user_id: int):
-        return await self._request("GET", f"/bot/check-admin/{user_id}")
+        return await self._request("GET", f"/users/check-admin/{user_id}")
+
+    async def check_access(self, user_id: int, username: str = None):
+        params = {}
+        if username:
+            params["username"] = username
+        return await self._request("GET", f"/users/check-access/{user_id}", params=params)
 
     async def get_user_by_id(self, user_id: int):
         return await self._request("GET", f"/users/{user_id}")
