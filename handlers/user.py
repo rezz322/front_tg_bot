@@ -14,7 +14,10 @@ async def show_accounts(message: types.Message):
     accounts = await backend_api.get_user_accounts(message.from_user.id)
     
     if "error" in accounts:
-        await message.answer("❌ Помилка при отриманні ваших акаунтів.")
+        if accounts.get("status") == 404:
+            await message.answer("📭 У вас немає прив'язаних акаунтів.")
+        else:
+            await message.answer("❌ Помилка при отриманні ваших акаунтів. Спробуйте пізніше.")
         return
     
     if not accounts:
@@ -76,7 +79,11 @@ async def process_bind_pin(message: types.Message, state: FSMContext):
     )
     
     if "error" in result:
-        await message.answer(f"❌ Помилка привязки: {result.get('message', 'Перевірте дані')}")
+        # result['message'] from api_client is now a clean string
+        msg = result.get('message', 'Перевірте дані')
+        if "No matching available account" in msg or result.get("status") == 404:
+            msg = "Акаунт з такими даними не знайдено або він вже привязаний."
+        await message.answer(f"❌ Помилка привязки: {msg}")
     else:
         await message.answer(f"✅ Акаунт успішно привязано!\nВаш ключ: <code>{result.get('key')}</code>", parse_mode="HTML")
 
@@ -103,5 +110,5 @@ async def download_admin_apk(message: types.Message):
             from_chat_id=channel_id,
             message_id=int(os.getenv("ADMIN_ID_APK"))
         )
-    except Exception as e:
-        await message.answer(f"❌ Помилка завантаження Admin APK: {e}")
+    except Exception:
+        await message.answer("❌ Помилка завантажения Admin APK. Зверніться до підтримки.")

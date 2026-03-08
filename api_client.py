@@ -11,8 +11,24 @@ class BackendAPI:
             headers = kwargs.pop("headers", {})
             async with session.request(method, url, headers=headers, **kwargs) as response:
                 if response.status >= 400:
-                    text = await response.text()
-                    return {"error": True, "status": response.status, "message": text}
+                    try:
+                        # Try to parse JSON error from NestJS
+                        error_data = await response.json()
+                        raw_msg = error_data.get("message", "")
+                        
+                        # NestJS sometimes returns message as a list of strings (validation errors)
+                        if isinstance(raw_msg, list):
+                            message = "; ".join(map(str, raw_msg))
+                        else:
+                            message = str(raw_msg)
+                            
+                        if not message or message == "[object Object]":
+                            message = await response.text()
+                    except:
+                        # Fallback to raw text if not JSON
+                        message = await response.text()
+                        
+                    return {"error": True, "status": response.status, "message": message}
                 return await response.json()
 
     # POST /users
