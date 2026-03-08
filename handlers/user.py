@@ -12,7 +12,7 @@ router = Router()
 async def show_accounts(message: types.Message):
     # For non-admins, show only their accounts
     accounts = await backend_api.get_user_accounts(message.from_user.id)
-    
+    print(accounts)
     if "error" in accounts:
         if accounts.get("status") == 404:
             await message.answer("📭 У вас немає прив'язаних акаунтів.")
@@ -50,12 +50,6 @@ async def show_apk_menu(message: types.Message):
 
 @router.message(F.text == "🔗 Bind Account")
 async def bind_account_start(message: types.Message, state: FSMContext):
-    await message.answer("Введіть ваше ПІБ (як в системі):")
-    await state.set_state(BindStates.waiting_for_fullname)
-
-@router.message(BindStates.waiting_for_fullname)
-async def process_bind_fullname(message: types.Message, state: FSMContext):
-    await state.update_data(full_name=message.text)
     await message.answer("Введіть ваш номер телефону:")
     await state.set_state(BindStates.waiting_for_phone)
 
@@ -73,13 +67,12 @@ async def process_bind_pin(message: types.Message, state: FSMContext):
     
     result = await backend_api.auto_issue_key(
         user_id=message.from_user.id,
-        full_name=data.get("full_name"),
         phone=data.get("phone"),
         pin=pin
     )
+    print(result)
     
     if "error" in result:
-        # result['message'] from api_client is now a clean string
         msg = result.get('message', 'Перевірте дані')
         if "No matching available account" in msg or result.get("status") == 404:
             msg = "Акаунт з такими даними не знайдено або він вже привязаний."

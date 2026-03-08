@@ -32,10 +32,9 @@ class UserAPI(BaseAPI):
     async def check_ban_by_key(self, key: str):
         return await self._request("GET", f"/accounts/key-check-ban/{key}")
 
-    async def auto_issue_key(self, user_id: int, full_name: str, phone: str, pin: str):
+    async def auto_issue_key(self, user_id: int, phone: str, pin: str):
         payload = {
             "telegramId": str(user_id),
-            "fullName": full_name,
             "phone": phone,
             "pin": pin
         }

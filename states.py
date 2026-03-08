@@ -15,6 +15,5 @@ class AdminStates(StatesGroup):
     waiting_for_edit_acc_value = State()
 
 class BindStates(StatesGroup):
-    waiting_for_fullname = State()
     waiting_for_phone = State()
     waiting_for_pin = State()
