@@ -6,12 +6,15 @@ def format_user_info(user_data: dict) -> str:
     username = user_data.get('username', 'unknown')
     is_whitelisted = "✅ Так" if user_data.get('isWhitelisted') else "❌ Ні"
     is_banned = "🚫 Так" if user_data.get('isBanned') else "✅ Ні"
+    limit = user_data.get('accountLimit', -1)
+    limit_str = "♾️ Необмежено" if limit == -1 else f"<code>{limit}</code>"
     
     res = (
         f"👤 <b>Користувач:</b> @{username}\n"
         f"🆔 <b>TG ID:</b> <code>{tg_id}</code>\n"
         f"⚪️ <b>Вайтліст:</b> {is_whitelisted}\n"
-        f"🔒 <b>Бан:</b> {is_banned}"
+        f"🔒 <b>Бан:</b> {is_banned}\n"
+        f"📊 <b>Ліміт акаунтів:</b> {limit_str}"
     )
     return res
 
@@ -26,11 +29,8 @@ def format_account_info(acc_data: dict) -> str:
     expires_at = acc_data.get('expiresAt')
     expires_str = expires_at.split('T')[0] if expires_at else '♾️'
     
-    tg_users = acc_data.get('telegramUsers', [])
-    user_display = ", ".join([
-        f"@{u.get('username')}" if u.get('username') else f"<code>{u.get('telegramId')}</code>" 
-        for u in tg_users
-    ]) if tg_users else "❌ Немає"
+    user = acc_data.get('user')
+    user_display = f"@{user.get('username')}" if user.get('username') else f"<code>{user.get('telegramId')}</code>" if user else "❌ Немає"
     
     res = (
         f"📊 <b>Акаунт:</b> <code>{phone}</code>\n"

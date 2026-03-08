@@ -13,6 +13,7 @@ class AdminStates(StatesGroup):
     # Edit Acc States
     waiting_for_edit_acc_field = State()
     waiting_for_edit_acc_value = State()
+    waiting_for_user_limit = State()
 
 class BindStates(StatesGroup):
     waiting_for_phone = State()

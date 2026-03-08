@@ -60,4 +60,7 @@ class AdminAPI(BaseAPI):
         }
         return await self._request("DELETE", "/accounts/admin/remove-account", json=payload)
 
+    async def set_user_limit(self, target_id: str, limit: int, admin_id: int):
+        return await self._request("PATCH", f"/users/admin/limit/{target_id}", json={"limit": int(limit), "adminId": str(admin_id)})
+
 admin_api = AdminAPI()

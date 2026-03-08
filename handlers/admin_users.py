@@ -45,7 +45,8 @@ async def process_user_info(message: types.Message, state: FSMContext):
         InlineKeyboardButton(text="✅ Розбанити" if is_banned else "🚫 Забанити", 
                              callback_data=f"{'unban' if is_banned else 'ban'}_{tg_id}"),
         InlineKeyboardButton(text="❌ Вид WL" if is_whitelisted else "📝 Дод WL", 
-                             callback_data=f"{'wlrem' if is_whitelisted else 'wladd'}_{user_info.get('username') or tg_id}")
+                             callback_data=f"{'wlrem' if is_whitelisted else 'wladd'}_{user_info.get('username') or tg_id}"),
+        InlineKeyboardButton(text="📊 Ліміт", callback_data=f"setlimit_{tg_id}")
     ])
     
     # User's accounts removal buttons
@@ -146,6 +147,35 @@ async def cb_toggle_whitelist(callback: types.CallbackQuery):
         status = "доданий до" if result.get("isWhitelisted") else "видалений з"
         await callback.message.answer(f"✅ Користувач <code>{target}</code> {status} вайтліста.", parse_mode="HTML")
         await callback.answer()
+
+@router.callback_query(F.data.startswith("setlimit_"))
+@admin_only
+async def cb_ask_user_limit(callback: types.CallbackQuery, state: FSMContext):
+    user_id = callback.data.split("_")[1]
+    await state.update_data(target_user_id=user_id)
+    await callback.message.answer(f"Введіть новий ліміт для користувача <code>{user_id}</code> (використовуйте -1 для безліміту):", parse_mode="HTML")
+    await state.set_state(AdminStates.waiting_for_user_limit)
+    await callback.answer()
+
+@router.message(AdminStates.waiting_for_user_limit)
+@admin_only
+async def process_user_limit(message: types.Message, state: FSMContext):
+    if not message.text.lstrip('-').isdigit():
+        await message.answer("❌ Будь ласка, введіть число.")
+        return
+    
+    limit = int(message.text)
+    data = await state.get_data()
+    target_id = data.get("target_user_id")
+    
+    result = await backend_api.set_user_limit(target_id, limit, admin_id=message.from_user.id)
+    await state.clear()
+    
+    if "error" not in result:
+        limit_text = "Необмежено" if limit == -1 else str(limit)
+        await message.answer(f"✅ Ліміт для користувача <code>{target_id}</code> змінено на: <b>{limit_text}</b>.", parse_mode="HTML")
+    else:
+        await message.answer(f"❌ Помилка: {result.get('message', 'Невідома помилка')}")
 
 @router.message(F.text == "👥 Всі Користувачі")
 @admin_only

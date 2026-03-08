@@ -95,6 +95,7 @@ async def process_give_key_days(message: types.Message, state: FSMContext):
     result = await backend_api.give_key_by_username(data.get("target_username"), acc_number, admin_id=message.from_user.id, days=days_val)
     
     if "error" in result:
+        print(result)
         await message.answer("❌ Помилка. Перевірте дані.")
     else:
         status_msg = f"на {days} днів" if days > 0 else "безстроково"
@@ -110,8 +111,8 @@ async def list_all_accounts(message: types.Message):
 
     text = "📚 <b>Всі акаунти в системі:</b>\n"
     for acc in accounts:
-        users = acc.get('telegramUsers', [])
-        user_display = ", ".join([f"@{u.get('username')}" if u.get('username') else str(u.get('telegramId')) for u in users]) or "❌"
+        user = acc.get('user')
+        user_display = f"@{user.get('username')}" if user and user.get('username') else str(user.get('telegramId')) if user else "❌"
         status = "🚫 " if acc.get('isBanned') else "🔹 "
         
         text += (
