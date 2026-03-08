@@ -2,7 +2,6 @@ from aiogram import Router, types
 from aiogram.filters import CommandStart
 from api_user import user_api as backend_api
 from keyboards import get_admin_main_menu, get_user_main_menu, get_unauthorized_keyboard
-from config import ADMIN_IDS
 
 router = Router()
 
@@ -19,7 +18,6 @@ async def cmd_start(message: types.Message):
     # Check if user is admin via backend API
     admin_response = await backend_api.check_admin(message.from_user.id)
     is_admin = admin_response.get("isAdmin", False) if isinstance(admin_response, dict) else False
-    print(is_admin)
     if is_admin:
         await message.answer(
             f"Привіт, Адмін {message.from_user.first_name}! (Права адміністратора підтверджено) Оберіть дію:",
@@ -27,6 +25,7 @@ async def cmd_start(message: types.Message):
         )
     else:
         user_info = await backend_api.get_user_by_id(message.from_user.id)
+        print(user_info)
         is_whitelisted = user_info.get("isWhitelisted", False) if isinstance(user_info, dict) else False
         
         if is_whitelisted:
