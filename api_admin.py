@@ -43,13 +43,13 @@ class AdminAPI(BaseAPI):
         payload = self._admin_payload(admin_id, {"username": username, "phone": phone, "days": days})
         return await self._request("POST", "/accounts/admin/give-key/username", json=payload)
 
-    async def update_account(self, account_id: int, data: dict, admin_id: int):
+    async def update_account(self, account_id: str, data: dict, admin_id: int):
         return await self._request("PATCH", f"/accounts/{account_id}", params={"adminId": admin_id}, json=data)
 
-    async def take_away_account(self, account_id: int, admin_id: int):
+    async def take_away_account(self, account_id: str, admin_id: int):
         return await self._request("POST", f"/accounts/admin/take-away/{account_id}", json={"adminId": str(admin_id)})
 
-    async def toggle_account_ban(self, account_id: int, admin_id: int):
+    async def toggle_account_ban(self, account_id: str, admin_id: int):
         return await self._request("POST", f"/accounts/admin/toggle-ban/{account_id}", json={"adminId": str(admin_id)})
 
     async def remove_account_from_user(self, phone: str, identifier: str, admin_id: int):

@@ -42,7 +42,7 @@ async def process_account_info(message: types.Message, state: FSMContext):
 @admin_only
 async def cb_toggle_account_ban(callback: types.CallbackQuery):
     _, acc_id, acc_num = callback.data.split("_")
-    result = await backend_api.toggle_account_ban(int(acc_id), admin_id=callback.from_user.id)
+    result = await backend_api.toggle_account_ban(acc_id, admin_id=callback.from_user.id)
     if "error" not in result:
         status = "забанений" if result.get("isBanned") else "розбанений"
         await callback.answer(f"✅ Акаунт {acc_num} {status}!")
@@ -112,7 +112,12 @@ async def list_all_accounts(message: types.Message):
     text = "📚 <b>Всі акаунти в системі:</b>\n"
     for acc in accounts:
         user = acc.get('user')
-        user_display = f"@{user.get('username')}" if user and user.get('username') else str(user.get('telegramId')) if user else "❌"
+        if isinstance(user, dict):
+            username = user.get('username')
+            tg_id = user.get('telegramId')
+            user_display = f"@{username}" if username else str(tg_id) if tg_id else "❓"
+        else:
+            user_display = "❌"
         status = "🚫 " if acc.get('isBanned') else "🔹 "
         
         text += (

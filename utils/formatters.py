@@ -20,17 +20,28 @@ def format_user_info(user_data: dict) -> str:
 
 def format_account_info(acc_data: dict) -> str:
     """Formats account information into a consistent HTML string."""
+    if not acc_data:
+        return "❌ Дані акаунта відсутні"
+        
     phone = acc_data.get('phone', 'N/A')
     key = acc_data.get('key', 'Немає')
     is_banned = "🚫 Забанений" if acc_data.get('isBanned') else "✅ Активний"
-    full_name = html.escape(acc_data.get('full_name', 'Не вказано'))
+    full_name = html.escape(str(acc_data.get('full_name', 'Не вказано')))
     pin = acc_data.get('pin_code', '****')
     
     expires_at = acc_data.get('expiresAt')
-    expires_str = expires_at.split('T')[0] if expires_at else '♾️'
+    try:
+        expires_str = expires_at.split('T')[0] if expires_at and isinstance(expires_at, str) else '♾️'
+    except Exception:
+        expires_str = '♾️'
     
     user = acc_data.get('user')
-    user_display = f"@{user.get('username')}" if user.get('username') else f"<code>{user.get('telegramId')}</code>" if user else "❌ Немає"
+    if isinstance(user, dict):
+        username = user.get('username')
+        tg_id = user.get('telegramId')
+        user_display = f"@{username}" if username else f"<code>{tg_id}</code>" if tg_id else "❓ Невідомо"
+    else:
+        user_display = "❌ Немає"
     
     res = (
         f"📊 <b>Акаунт:</b> <code>{phone}</code>\n"
